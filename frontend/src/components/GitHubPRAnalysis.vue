@@ -66,9 +66,9 @@
       </div>
       
       <!-- Loading Progress -->
-      <div v-if="loading" class="mt-4">
+      <div v-if="loading || progress > 0" class="mt-4">
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div class="flex items-center">
+          <div class="flex items-center mb-2">
             <svg class="w-5 h-5 text-blue-600 animate-spin mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
@@ -79,6 +79,14 @@
               </p>
             </div>
           </div>
+          <!-- Progress Bar -->
+          <div class="w-full bg-gray-200 rounded-full h-2">
+            <div 
+              class="h-2 bg-blue-600 rounded-full transition-all duration-300"
+              :style="{ width: `${Math.floor(progress)}%` }"
+            ></div>
+          </div>
+          <p class="text-xs text-gray-600 mt-1">Analyzing PR… {{ Math.floor(progress) }}%</p>
         </div>
       </div>
     </div>
@@ -178,6 +186,40 @@
         </div>
       </div>
 
+      <!-- Detailed Conflicts -->
+      <div v-if="analysisResult.conflicts_detailed?.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Potential Line Conflicts</h3>
+        <div class="space-y-4">
+          <div 
+            v-for="conflict in analysisResult.conflicts_detailed"
+            :key="`${conflict.with_pr}-${conflict.file}`"
+            class="bg-red-50 border border-red-200 rounded-lg p-4"
+          >
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="font-medium text-red-900">{{ conflict.file }}</h4>
+              <span class="text-sm text-red-600">Conflicts with PR #{{ conflict.with_pr }}</span>
+            </div>
+            <div class="space-y-2">
+              <div 
+                v-for="(overlap, idx) in conflict.overlaps"
+                :key="idx"
+                class="flex items-center space-x-4 text-sm"
+              >
+                <div class="flex items-center space-x-2">
+                  <span class="px-2 py-1 bg-red-100 text-red-800 rounded text-xs">
+                    This PR: lines {{ overlap.this_lines }}
+                  </span>
+                  <span class="text-gray-400">↔</span>
+                  <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs">
+                    PR #{{ conflict.with_pr }}: lines {{ overlap.other_lines }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Recommendations -->
       <div v-if="analysisResult.recommendations?.length > 0" class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">AI Recommendations</h3>
@@ -226,13 +268,38 @@ const selectedRepo = ref(null)
 const prNumber = ref('')
 const analysisResult = ref(null)
 const error = ref(null)
+const progress = ref(0)
 
 const repositories = computed(() => prStore.repositories)
 const loading = computed(() => prStore.loading)
 
+let progressTimer = null
+
+const startProgress = () => {
+  progress.value = 5
+  progressTimer = setInterval(() => {
+    if (progress.value < 90) {
+      progress.value += Math.max(1, (90 - progress.value) * 0.05)
+    }
+  }, 200)
+}
+
+const finishProgress = () => {
+  if (progressTimer) {
+    clearInterval(progressTimer)
+    progressTimer = null
+  }
+  progress.value = 100
+  setTimeout(() => {
+    progress.value = 0
+  }, 500)
+}
+
 const analyzePR = async () => {
   error.value = null
   analysisResult.value = null
+  loading.value = true
+  startProgress()
   
   try {
     const result = await prStore.analyzeGitHubPR(
@@ -241,19 +308,12 @@ const analyzePR = async () => {
       parseInt(prNumber.value)
     )
     analysisResult.value = result
-  } catch (error) {
-    console.error('Failed to analyze PR:', error)
-    
-    // Provide user-friendly error messages
-    if (error.code === 'ECONNABORTED') {
-      error.value = 'Analysis timed out. The PR might be too complex or the server is slow. Please try again.'
-    } else if (error.response?.status === 404) {
-      error.value = 'Pull request not found. Please check the PR number and repository.'
-    } else if (error.response?.status === 403) {
-      error.value = 'Access denied. Please check if the repository is public or if you have the correct permissions.'
-    } else {
-      error.value = error.message || 'Failed to analyze PR. Please try again.'
-    }
+  } catch (err) {
+    console.error('Failed to analyze PR:', err)
+    error.value = err.message || 'Failed to analyze PR. Please try again.'
+  } finally {
+    loading.value = false
+    finishProgress()
   }
 }
 
@@ -316,5 +376,30 @@ const getPriorityBadgeClass = (priority) => {
     low: 'bg-green-100 text-green-800'
   }
   return classes[priority] || 'bg-gray-100 text-gray-800'
+}
+
+const loadRepoPRs = async (repo) => {
+  try {
+    const prs = await prStore.repoPRs(repo.owner, repo.name)
+    repo.prs = prs
+  } catch (error) {
+    console.error('Failed to load repo PRs:', error)
+  }
+}
+
+const selectPRForAnalysis = (repo, pr) => {
+  // Emit event to parent component to switch to analysis tab
+  // or you can directly set the selected repo and PR number
+  selectedRepo.value = repo
+  prNumber.value = pr.number
+}
+
+const getStatusBadgeClass = (status) => {
+  const classes = {
+    open: 'bg-blue-100 text-blue-800',
+    closed: 'bg-gray-100 text-gray-800',
+    merged: 'bg-green-100 text-green-800'
+  }
+  return classes[status] || 'bg-gray-100 text-gray-800'
 }
 </script>

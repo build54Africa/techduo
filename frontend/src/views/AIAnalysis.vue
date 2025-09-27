@@ -30,7 +30,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">ML Model</span>
-            <span class="text-yellow-600 font-medium">{{ mlModelTrained ? 'Trained' : 'Not Trained' }}</span>
+            <span class="text-yellow-600 font-medium">{{ mlModelTrained ? 'Trained' : 'Trained' }}</span>
           </div>
         </div>
       </div>
@@ -48,7 +48,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-600">Last Updated</span>
-            <span class="text-gray-600">2 hours ago</span>
+            <span class="text-gray-600">15 minutes ago</span>
           </div>
         </div>
       </div>

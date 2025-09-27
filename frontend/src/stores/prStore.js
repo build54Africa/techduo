@@ -223,6 +223,11 @@ export const usePRStore = defineStore('pr', () => {
     }
   }
 
+  const repoPRs = async (owner, repoName) => {
+    const res = await githubAPI.repoPRs({ owner, repo_name: repoName })
+    return res.data.prs
+  }
+
   return {
     pullRequests,
     repositories,
@@ -238,6 +243,7 @@ export const usePRStore = defineStore('pr', () => {
     analyzeRisk,
     getRecommendations,
     predictConflicts,
-    trainMLModel
+    trainMLModel,
+    repoPRs
   }
 })

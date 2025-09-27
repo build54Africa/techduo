@@ -49,7 +49,8 @@ export const githubAPI = {
   connectRepository: (data) => api.post('/github/connect/', data),
   syncPullRequests: (data) => api.post('/github/sync/', data),
   analyzePR: (data) => api.post('/github/analyze/', data, { timeout: 60000 }), // 60 seconds for analysis
-  searchRepositories: (params) => api.get('/github/search/', { params })
+  searchRepositories: (params) => api.get('/github/search/', { params }),
+  repoPRs: (params) => api.get('/github/repo-prs/', { params })
 }
 
 export default api

@@ -18,4 +18,5 @@ urlpatterns = [
     path('github/sync/', github_views.sync_pull_requests, name='sync_pull_requests'),
     path('github/analyze/', github_views.analyze_github_pr, name='analyze_github_pr'),
     path('github/search/', github_views.search_repositories, name='search_repositories'),
+    path('github/repo-prs/', github_views.repo_prs, name='github_repo_prs'),
 ]
