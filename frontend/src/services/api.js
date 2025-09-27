@@ -7,7 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10 second timeout
+  timeout: 30000, // Increased to 30 seconds
 })
 
 // Request interceptor
@@ -31,6 +31,9 @@ api.interceptors.response.use(
     if (error.code === 'ECONNREFUSED') {
       console.error('Backend server is not running. Please start it with: python manage.py runserver')
       error.message = 'Backend server is not running. Please start it first.'
+    } else if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout. The analysis is taking longer than expected.')
+      error.message = 'Analysis timeout. Please try again or check if the PR exists.'
     } else if (error.response) {
       console.error('API Error:', error.response.data || error.message)
     } else {
@@ -39,5 +42,14 @@ api.interceptors.response.use(
     return Promise.reject(error)
   }
 )
+
+// GitHub API methods
+export const githubAPI = {
+  getStatus: () => api.get('/github/status/'),
+  connectRepository: (data) => api.post('/github/connect/', data),
+  syncPullRequests: (data) => api.post('/github/sync/', data),
+  analyzePR: (data) => api.post('/github/analyze/', data, { timeout: 60000 }), // 60 seconds for analysis
+  searchRepositories: (params) => api.get('/github/search/', { params })
+}
 
 export default api

@@ -19,6 +19,9 @@
       </div>
     </div>
 
+    <!-- GitHub Integration -->
+    <GitHubConnect />
+
     <!-- Stats Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       <StatCard
@@ -40,9 +43,9 @@
         color="green"
       />
       <StatCard
-        title="Resolved Conflicts"
-        :value="stats.resolvedConflicts"
-        icon="✅"
+        title="GitHub Repos"
+        :value="stats.githubRepos"
+        icon="🐙"
         color="purple"
       />
     </div>
@@ -101,6 +104,7 @@ import PullRequestList from '../components/PullRequestList.vue'
 import AIInsights from '../components/AIInsights.vue'
 import RiskChart from '../components/RiskChart.vue'
 import AnalysisModal from '../components/AnalysisModal.vue'
+import GitHubConnect from '../components/GitHubConnect.vue'
 
 const prStore = usePRStore()
 
@@ -115,7 +119,7 @@ const stats = computed(() => ({
   totalPRs: pullRequests.value.length,
   highRiskPRs: pullRequests.value.filter(pr => pr.risk_level === 'high').length,
   aiPredictions: pullRequests.value.filter(pr => pr.ai_generated).length,
-  resolvedConflicts: pullRequests.value.filter(pr => pr.status === 'merged').length
+  githubRepos: prStore.repositories.length
 }))
 
 const riskData = computed(() => {
@@ -181,4 +185,3 @@ onMounted(async () => {
 })
 </script>
 ```
-

@@ -1,12 +1,103 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import api from '../services/api'
+import api, { githubAPI } from '../services/api'
 
 export const usePRStore = defineStore('pr', () => {
   const pullRequests = ref([])
+  const repositories = ref([])
   const loading = ref(false)
   const error = ref(null)
+  const githubStatus = ref(null)
 
+  // GitHub methods
+  const checkGitHubStatus = async () => {
+    try {
+      const response = await githubAPI.getStatus()
+      githubStatus.value = response.data
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const connectRepository = async (owner, repoName) => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await githubAPI.connectRepository({
+        owner,
+        repo_name: repoName
+      })
+      
+      // Add to repositories list
+      const repo = response.data.repository
+      const existingIndex = repositories.value.findIndex(r => r.id === repo.id)
+      if (existingIndex >= 0) {
+        repositories.value[existingIndex] = repo
+      } else {
+        repositories.value.push(repo)
+      }
+      
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const syncPullRequests = async (owner, repoName, state = 'open') => {
+    loading.value = true
+    error.value = null
+    try {
+      const response = await githubAPI.syncPullRequests({
+        owner,
+        repo_name: repoName,
+        state
+      })
+      
+      // Update pull requests list
+      await fetchPullRequests()
+      
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      throw err
+    } finally {
+      loading.value = false
+    }
+  }
+
+  const analyzeGitHubPR = async (owner, repoName, prNumber) => {
+    try {
+      const response = await githubAPI.analyzePR({
+        owner,
+        repo_name: repoName,
+        pr_number: prNumber
+      })
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  const searchRepositories = async (query, language = null) => {
+    try {
+      const response = await githubAPI.searchRepositories({
+        q: query,
+        language
+      })
+      return response.data
+    } catch (err) {
+      error.value = err.message
+      throw err
+    }
+  }
+
+  // Existing methods
   const fetchPullRequests = async () => {
     loading.value = true
     error.value = null
@@ -134,8 +225,15 @@ export const usePRStore = defineStore('pr', () => {
 
   return {
     pullRequests,
+    repositories,
     loading,
     error,
+    githubStatus,
+    checkGitHubStatus,
+    connectRepository,
+    syncPullRequests,
+    analyzeGitHubPR,
+    searchRepositories,
     fetchPullRequests,
     analyzeRisk,
     getRecommendations,

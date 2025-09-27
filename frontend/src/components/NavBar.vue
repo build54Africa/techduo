@@ -27,6 +27,13 @@
             Pull Requests
           </router-link>
           <router-link 
+            to="/github" 
+            class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+            :class="{ 'text-blue-600 bg-blue-50': $route.path === '/github' }"
+          >
+            GitHub Analysis
+          </router-link>
+          <router-link 
             to="/ai" 
             class="text-gray-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             :class="{ 'text-blue-600 bg-blue-50': $route.path === '/ai' }"
