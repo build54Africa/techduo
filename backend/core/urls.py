@@ -6,6 +6,8 @@ urlpatterns = [
     path('risk/', views.analyze_risk, name='analyze_risk'),
     path('recommendation/', views.get_recommendation, name='get_recommendation'),
     path('predict/', views.predict_conflicts, name='predict_conflicts'),
+    path('train/', views.train_ml_model, name='train_ml_model'),
+    path('ai-status/', views.ai_status, name='ai_status'),
     path('prs/', views.list_pull_requests, name='list_pull_requests'),
     path('prs/<int:pr_number>/', views.get_pull_request, name='get_pull_request'),
 ]
