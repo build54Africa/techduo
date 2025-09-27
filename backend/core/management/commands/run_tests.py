@@ -1,0 +1,20 @@
+#!/usr/bin/env python
+"""
+Test runner script for MergeSensei
+Usage: python run_tests.py
+"""
+
+import os
+import sys
+import django
+from django.conf import settings
+from django.test.utils import get_runner
+
+if __name__ == "__main__":
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "MergeSensei.settings")
+    django.setup()
+    TestRunner = get_runner(settings)
+    test_runner = TestRunner()
+    failures = test_runner.run_tests(["core"])
+    if failures:
+        sys.exit(bool(failures))
