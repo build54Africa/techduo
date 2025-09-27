@@ -1,11 +1,27 @@
-<script setup></script>
+<script setup>
+import { onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import NavBar from './components/NavBar.vue'
+
+const router = useRouter()
+
+onMounted(() => {
+  // Initialize app
+  console.log('MergeSensei Frontend Loaded')
+})
+</script>
 
 <template>
-  <h1>You did it!</h1>
-  <p>
-    Visit <a href="https://vuejs.org/" target="_blank" rel="noopener">vuejs.org</a> to read the
-    documentation
-  </p>
+  <div id="app" class="min-h-screen bg-gray-50">
+    <NavBar />
+    <main class="container mx-auto px-4 py-8">
+      <router-view />
+    </main>
+  </div>
 </template>
 
-<style scoped></style>
+<style>
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+</style>
